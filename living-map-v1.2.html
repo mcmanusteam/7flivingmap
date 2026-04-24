@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Living Map v1.2 — Seven Frequencies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080e;
+    --panel: #0f0f1a;
+    --panel-2: #161625;
+    --panel-3: #1e1e30;
+    --gold: #c9a75c;
+    --gold-dim: #8a7340;
+    --gold-faint: #3d3420;
+    --text: #ede9df;
+    --text-dim: #8a8578;
+    --text-faint: #55524a;
+    --border: #2a2a3d;
+    --border-dim: #1a1a2a;
+    --shadow-red: #d44545;
+    --shadow-red-dim: #8a3535;
+
+    --mot: #e8533a;
+    --hea: #4db882;
+    --cha: #e8a020;
+    --com: #4a7ee0;
+    --pro: #9b6ed4;
+    --see: #38b8c0;
+    --mav: #d44e96;
+
+    --dyn-relating: #4db882;
+    --dyn-activating: #e8533a;
+    --dyn-informing: #9b6ed4;
+    --dyn-innovating: #38b8c0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(201, 167, 92, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(74, 126, 224, 0.03) 0%, transparent 50%),
+      var(--bg);
+  }
+  .mono { font-family: 'DM Mono', monospace; letter-spacing: 0.04em; }
+  .label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); }
+
+  /* ---------- Layout ---------- */
+  .app {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+  header.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-dim);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .brand h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 40px;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .brand h1 em {
+    font-style: italic;
+    color: var(--gold);
+    font-weight: 400;
+  }
+  .brand .sub { color: var(--text-dim); font-size: 14px; letter-spacing: 0.04em; }
+  .brand .version { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--text-faint); margin-top: 4px; }
+
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--gold-dim); color: var(--text); }
+  .btn-ghost.active { border-color: var(--gold); color: var(--gold); }
+
+  /* ---------- Saved Roster ---------- */
+  .roster {
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .roster-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .roster-items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .chip:hover { border-color: var(--gold-dim); }
+  .chip.current { border-color: var(--gold); color: var(--gold); }
+  .chip .x {
+    color: var(--text-faint);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 0 2px;
+    transition: color 0.2s;
+  }
+  .chip .x:hover { color: var(--shadow-red); }
+
+  /* ---------- Map canvas ---------- */
+  .body {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .body.relational {
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 1100px) {
+    .body, .body.relational { grid-template-columns: 1fr; }
+  }
+
+  .map-panel {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+    border: 1px solid var(--border-dim);
+    padding: 24px 16px 32px;
+    position: relative;
+    min-height: 720px;
+  }
+  .map-panel.relational { min-height: 760px; }
+  .map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 0 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .map-title { font-size: 13px; letter-spacing: 0.18em; color: var(--text-dim); font-family: 'DM Mono', monospace; text-transform: uppercase; }
+  .map-toggles { display: flex; gap: 6px; align-items: center; }
+  .toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toggle-btn:hover { color: var(--text); border-color: var(--gold-dim); }
+  .toggle-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .toggle-btn.shadow-active { background: var(--shadow-red); color: var(--bg); border-color: var(--shadow-red); }
+
+  /* SVG map styles */
+  .map-svg { width: 100%; height: auto; display: block; }
+
+  .freq-dot {
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .freq-dot:hover .dot-core { r: 17; }
+  .freq-dot.selected .dot-core { r: 19; stroke-width: 2; }
+  .freq-dot.bridge .dot-core { r: 20; }
+  .freq-dot.bridge.selected .dot-core { r: 22; }
+
+  .dot-core {
+    r: 15;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .dot-ring {
+    fill: none;
+    stroke-width: 1;
+    opacity: 0.35;
+    transition: all 0.3s;
+  }
+  .freq-dot:hover .dot-ring { opacity: 0.7; r: 26; }
+  .freq-dot.selected .dot-ring { opacity: 0.9; r: 30; stroke-width: 1.5; }
+
+  .dot-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    fill: var(--text-dim);
+    text-anchor: middle;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .freq-dot:hover .dot-label,
+  .freq-dot.selected .dot-label { fill: var(--text); }
+
+  .dot-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    fill: var(--text-faint);
+    text-anchor: middle;
+    pointer-events: none;
+  }
+  .freq-dot.selected .dot-score { fill: var(--gold); }
+
+  .dot-rank {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12px;
+    fill: var(--gold-dim);
+    text-anchor: middle;
+    pointer-events: none;
+  }
+  .freq-dot.selected .dot-rank { fill: var(--gold); }
+
+  .triangle {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1;
+    opacity: 0.35;
+    transition: all 0.4s;
+  }
+  .triangle.dyn-overlay { opacity: 0.18; stroke-width: 2; }
+  .bridge-line {
+    stroke: var(--gold-dim);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+    opacity: 0.5;
+  }
+  .region-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    fill: var(--text-faint);
+    text-anchor: middle;
+  }
+  .region-label-side {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    fill: var(--text-faint);
+  }
+  .bridge-glow {
+    fill: var(--gold);
+    opacity: 0;
+    animation: bridge-pulse 3s ease-in-out infinite;
+  }
+  @keyframes bridge-pulse {
+    0%, 100% { opacity: 0; r: 22; }
+    50% { opacity: 0.08; r: 40; }
+  }
+
+  /* Score-gap marker */
+  .gap-marker {
+    fill: none;
+    stroke: var(--gold-dim);
+    stroke-width: 1;
+    opacity: 0.4;
+  }
+  .gap-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    fill: var(--text-faint);
+    text-anchor: middle;
+  }
+
+  /* Shadow mode styling */
+  .shadow-mode .freq-dot .dot-core { fill-opacity: 0.4; }
+  .shadow-mode .freq-dot.selected .dot-core { fill-opacity: 1; }
+
+  /* Relational connection lines */
+  .rel-line {
+    fill: none;
+    stroke-width: 1.5;
+    opacity: 0.5;
+    transition: all 0.3s;
+  }
+  .rel-line.bridge-match { stroke-width: 2.5; opacity: 0.85; stroke-dasharray: none; }
+  .rel-line.shared { stroke: var(--gold); opacity: 0.7; stroke-dasharray: 3 3; }
+
+  /* Map controls */
+  .map-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-dim);
+    flex-wrap: wrap;
+  }
+  .map-controls button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 9px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .map-controls button:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--text); }
+  .map-controls button.primary { border-color: var(--gold); color: var(--gold); }
+  .map-controls button.primary:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+  .map-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .walk-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    padding: 0 16px;
+  }
+  .walk-indicator .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+
+  /* ---------- Detail panel ---------- */
+  .detail-panel {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  .detail-panel::-webkit-scrollbar { width: 6px; }
+  .detail-panel::-webkit-scrollbar-track { background: var(--panel); }
+  .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .detail-empty {
+    padding: 60px 40px;
+    text-align: center;
+    color: var(--text-faint);
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .detail-empty .tip {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-dim);
+    font-style: normal;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .detail-card {
+    background: var(--panel);
+    border: 1px solid var(--border-dim);
+    padding: 0;
+    overflow: hidden;
+  }
+  .detail-hero {
+    padding: 28px 28px 22px;
+    border-bottom: 1px solid var(--border-dim);
+    position: relative;
+    overflow: hidden;
+  }
+  .detail-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    background: radial-gradient(circle at 70% 30%, var(--hero-color, var(--gold)), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-position {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+    padding: 4px 12px;
+    margin-bottom: 14px;
+  }
+  .hero-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .hero-shadow-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .hero-transmits {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .hero-transmits strong { color: var(--text); font-weight: 400; }
+  .hero-dynamic {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    background: rgba(201, 167, 92, 0.1);
+    border: 1px solid var(--gold-faint);
+    color: var(--gold-dim);
+  }
+
+  .detail-body { padding: 20px 28px 28px; }
+  .detail-section { margin-bottom: 22px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-section h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 400;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .detail-section p {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+  .detail-section p + p { margin-top: 10px; }
+  .detail-meta {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  .position-note {
+    font-style: italic;
+    color: var(--text);
+    border-left: 2px solid var(--gold);
+    padding-left: 14px;
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  .shadow-block {
+    background: rgba(212, 69, 69, 0.04);
+    border: 1px solid rgba(212, 69, 69, 0.15);
+    padding: 14px 16px;
+  }
+  .shadow-block + .shadow-block { margin-top: 10px; }
+  .shadow-block h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #d46565;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+  .shadow-block p { font-size: 15px; color: var(--text); line-height: 1.55; }
+  .shadow-list { list-style: none; padding-left: 0; }
+  .shadow-list li {
+    padding: 6px 0 6px 20px;
+    position: relative;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .shadow-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #d46565;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .reflection {
+    background: var(--panel-2);
+    border: 1px solid var(--border-dim);
+    padding: 16px 18px 16px 30px;
+    font-style: italic;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.55;
+    position: relative;
+  }
+  .reflection::before {
+    content: '"';
+    position: absolute;
+    top: -4px;
+    left: 10px;
+    font-size: 36px;
+    color: var(--gold);
+    font-family: 'Cormorant Garamond', serif;
+    line-height: 1;
+  }
+
+  .coach-notes textarea {
+    width: 100%;
+    min-height: 100px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .coach-notes textarea:focus { outline: none; border-color: var(--gold-dim); }
+  .coach-notes .note-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ---------- Setup screen ---------- */
+  .setup {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 36px 32px;
+    background: var(--panel);
+    border: 1px solid var(--border-dim);
+  }
+  .setup h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .setup .setup-sub { color: var(--text-dim); margin-bottom: 24px; font-size: 15px; }
+  .setup-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .setup-tabs button {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 10px 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .setup-tabs button.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .setup-field { margin-bottom: 14px; }
+  .setup-field label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .setup-field input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+  }
+  .setup-field input[type="text"]:focus { outline: none; border-color: var(--gold-dim); }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: 1fr 60px;
+    gap: 8px 14px;
+    align-items: center;
+  }
+  .score-row { display: contents; }
+  .score-row .freq-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+  }
+  .score-row .freq-label .mini-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .score-row input[type="number"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    text-align: center;
+  }
+  .score-row input[type="number"]:focus { outline: none; border-color: var(--gold-dim); }
+
+  .rank-list { display: flex; flex-direction: column; gap: 7px; }
+  .rank-row { display: flex; align-items: center; gap: 12px; }
+  .rank-row .rank-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--gold);
+    width: 28px;
+  }
+  .rank-row select {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+  }
+  .rank-row select:focus { outline: none; border-color: var(--gold-dim); }
+
+  .setup-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border-dim);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: var(--bg);
+    border: none;
+    padding: 12px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--text); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 12px 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--gold-dim); }
+
+  .sample-hint { color: var(--text-faint); font-size: 13px; font-style: italic; }
+  .sample-hint a { color: var(--gold-dim); cursor: pointer; text-decoration: underline; }
+  .sample-hint a:hover { color: var(--gold); }
+
+  /* client meta bar */
+  .client-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--panel-2);
+    border: 1px solid var(--border-dim);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .client-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 500;
+  }
+  .client-meta { font-size: 13px; color: var(--text-dim); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
+
+  /* ---------- Inner Voice module ---------- */
+  .inner-voice-banner {
+    margin-top: 24px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(201, 167, 92, 0.05) 0%, rgba(74, 126, 224, 0.05) 100%);
+    border: 1px solid var(--gold-faint);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .inner-voice-banner:hover { border-color: var(--gold-dim); }
+  .inner-voice-banner h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--gold);
+    font-style: italic;
+    margin-bottom: 4px;
+  }
+  .inner-voice-banner p { color: var(--text-dim); font-size: 15px; }
+
+  .inner-voice-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 8, 14, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .inner-voice-content {
+    background: var(--panel);
+    border: 1px solid var(--gold-faint);
+    max-width: 820px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 40px 48px;
+    position: relative;
+  }
+  .inner-voice-content::-webkit-scrollbar { width: 6px; }
+  .inner-voice-content::-webkit-scrollbar-track { background: var(--panel); }
+  .inner-voice-content::-webkit-scrollbar-thumb { background: var(--gold-faint); border-radius: 3px; }
+  .iv-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 24px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+  }
+  .iv-close:hover { color: var(--text); }
+  .inner-voice-content h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .inner-voice-content .iv-sub { color: var(--text-dim); font-size: 15px; margin-bottom: 32px; font-style: italic; }
+  .iv-practice {
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .iv-practice:last-of-type { border-bottom: none; }
+  .iv-practice h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .iv-practice p { color: var(--text); font-size: 16.5px; line-height: 1.65; }
+  .iv-checkins {
+    background: var(--panel-2);
+    padding: 24px 28px;
+    border: 1px solid var(--gold-faint);
+    margin-top: 24px;
+  }
+  .iv-checkins h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .iv-checkins ol {
+    padding-left: 20px;
+    color: var(--text);
+  }
+  .iv-checkins li {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+
+  /* Relational specific */
+  .rel-header {
+    padding: 12px 18px;
+    background: var(--panel-2);
+    border: 1px solid var(--border-dim);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .rel-header .name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .rel-header .meta { font-size: 12px; color: var(--text-dim); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; }
+
+  .bridge-reading {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(201, 167, 92, 0.06) 0%, transparent 100%);
+    border: 1px solid var(--gold-faint);
+  }
+  .bridge-reading h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .bridge-reading .rl-row {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border-dim);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .bridge-reading .rl-row:last-child { border-bottom: none; }
+  .bridge-reading .rl-arrow {
+    font-family: 'DM Mono', monospace;
+    color: var(--gold);
+    font-size: 14px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .bridge-reading .rl-text {
+    font-size: 15.5px;
+    line-height: 1.55;
+  }
+  .bridge-reading .rl-text strong { color: var(--gold); font-weight: 500; }
+
+  /* entrance */
+  .fade-in { animation: fadeIn 0.5s ease-out; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Save indicator */
+  .save-indicator {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    z-index: 50;
+    animation: fadeIn 0.3s;
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print {
+    @page { size: letter; margin: 0.5in; }
+    body {
+      background: white;
+      color: #222;
+      font-size: 12pt;
+    }
+    .app { padding: 0; max-width: none; }
+    header.top, .header-actions, .roster, .map-controls, .coach-notes-hide-in-print,
+    .inner-voice-banner, .inner-voice-modal, .save-indicator,
+    .toggle-btn, .btn-ghost, .mode-toggle { display: none !important; }
+    .map-panel {
+      background: white;
+      border: 1px solid #ccc;
+      page-break-inside: avoid;
+      min-height: auto;
+    }
+    .client-bar { background: #f5f5f0; border: 1px solid #ccc; }
+    .client-name, .map-title, .hero-name, .detail-section h3 { color: #222 !important; }
+    .detail-panel { position: static; max-height: none; overflow: visible; }
+    .detail-card { background: white; border: 1px solid #ccc; }
+    .detail-hero { background: #f9f9f4; }
+    .body { display: block; }
+    .body > * { break-inside: avoid; margin-bottom: 16pt; }
+    .freq-dot .dot-core { filter: none !important; }
+    .bridge-reading { background: #fafaf5; border: 1px solid #ccc; }
+    .print-only { display: block !important; }
+    .print-summary {
+      page-break-before: always;
+      padding: 20pt 0;
+    }
+  }
+  .print-only { display: none; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+/* =============================================================================
+   THE LIVING MAP — v1.2
+   Solo + relational + shadow + inner voice + save/load + notes + PDF export
+   Part of the Seven Frequencies coaching suite (pairs with DTM/TDCM Team Diagnostic)
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   STORAGE SHIM — mirrors the window.storage async API used in the Team Diagnostic
+   so the two tools speak the same dialect when we unify them later.
+   ----------------------------------------------------------------------------- */
+const storage = {
+  async get(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? { key, value: raw } : null;
+    } catch (e) { return null; }
+  },
+  async set(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return { key, value };
+    } catch (e) { return null; }
+  },
+  async delete(key) {
+    try {
+      localStorage.removeItem(key);
+      return { key, deleted: true };
+    } catch (e) { return null; }
+  },
+  async list(prefix = '') {
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) keys.push(k);
+      }
+      return { keys, prefix };
+    } catch (e) { return { keys: [] }; }
+  }
+};
+
+const STORAGE_PREFIX = 'livingmap:';
+
+/* -----------------------------------------------------------------------------
+   FREQUENCY DATA
+   Expanded from v1 to include shadow-questions, shadow-exits, dynamic,
+   and marker — used across solo depth, shadow mode, and PDF export.
+   ----------------------------------------------------------------------------- */
+
+const FREQUENCIES = {
+  mot: {
+    id: 'mot', name: 'Motivator', shadow: 'Performer', color: '#e8533a',
+    basic: 'Energy', high: 'Self-belief', dynamic: 'Relating',
+    themes: 'Encourager / Enthusiast / Inspirer',
+    drive: 'I must bring the energy to the room.',
+    marker: 'Do others look to you for encouragement?',
+    body: 'Reminds others that life matters and that they matter. Infuses self-belief from the inside out so people believe they are here to do something that matters.',
+    shadowBody: 'The Performer places more importance on how the audience feels about them than how they feel about the audience. Driven by the need to be accepted or affirmed — presents to each person whoever they think the person wants to see. You watch a motivating performance instead of experiencing a Motivator.',
+    shadowQuestions: [
+      'Am I more concerned with how someone thinks or feels about me than I am about my impact?',
+      'Am I a hostage to the acceptance of others?',
+      'Do I motivate to bring life-change to others, or to receive applause?'
+    ],
+    shadowExit: 'Have an honest conversation with yourself. Tell yourself the story of you and be vulnerable about your fears, pain, and shortcomings. The world doesn\u2019t need a perfectly crafted version of you — it needs the authentic you. Move from "What are people saying about me?" to "What am I saying about others?"'
+  },
+  cha: {
+    id: 'cha', name: 'Challenger', shadow: 'Manipulator', color: '#e8a020',
+    basic: 'Courage', high: 'Mandate', dynamic: 'Activating',
+    themes: 'Persuader / Exhorter / Confronter',
+    drive: 'I must raise the standard.',
+    marker: 'Do others look to you to call them to a higher standard?',
+    body: 'Calls others up. Frames meaning as something earned, intimacy as worth fighting for, progress as the other side of sacrifice.',
+    shadowBody: 'The Manipulator coerces results. Where the Challenger calls people up for their own good, the Manipulator calls them to what they need for personal gain. Does not take "no" for an answer — sees free will as a roadblock.',
+    shadowQuestions: [
+      'Am I asking more of others than I am of myself?',
+      'Do I get people to do things I am unwilling to do?',
+      'Do I find myself ignoring someone\u2019s "no"?'
+    ],
+    shadowExit: 'Establish boundaries within yourself. Recognize your frequency carries immense power — decide you will not use the force of your personality to override another person\u2019s "no." When you call others forward, always be willing to go first and pay the price you ask others to pay.'
+  },
+  com: {
+    id: 'com', name: 'Commander', shadow: 'Dictator', color: '#4a7ee0',
+    basic: 'Trust', high: 'Direction', dynamic: 'Activating',
+    themes: 'Authoritarian / Executor / Directive',
+    drive: 'I must move people to action.',
+    marker: 'Do others look to you to tell them what to do?',
+    body: 'Directs, aligns, mobilizes. Gives others meaning through mission. Collapses confusion into action, sharpens roles, returns momentum.',
+    shadowBody: 'The Dictator seeks to eliminate individual will and personal choice, fueled by the desire to fulfill their own wants. Absolute certainty of their rightness; anyone who disagrees becomes the enemy. Creates a "yes" culture of complete compliance.',
+    shadowQuestions: [
+      'Do I take input from multiple people until I find someone who agrees with me?',
+      'Do I surround myself with "yes" people?',
+      'Who are the experts in my life that I listen to, even if I disagree with them?'
+    ],
+    shadowExit: 'Realize the shadow is fueled by fear. The Dictator looks strong and fueled by force, but is actually afraid to be wrong and lose control. Go to the wisest person you know and ask for their opinion. Your level of openness to their input determines how quickly you leave your shadow.'
+  },
+  hea: {
+    id: 'hea', name: 'Healer', shadow: 'Cipher', color: '#4db882',
+    basic: 'Acceptance', high: 'Wholeness', dynamic: 'Relating',
+    themes: 'Counselor / Therapist / Developer',
+    drive: 'I must create a safe space for people to heal.',
+    marker: 'Do others look to you for empathy and compassion?',
+    body: 'Sees each person. Assumes everyone carries wounding, and communicates that brokenness is the material of contribution, not the obstacle to it.',
+    shadowBody: 'The Cipher consumes empathy where the Healer releases it. An emotional black hole that looks like empathy but absorbs others\u2019 pain to self-soothe. Someone else\u2019s wound becomes a springboard to talk about their own.',
+    shadowQuestions: [
+      'When someone shares their pain with me, do I immediately start talking about my own pain?',
+      'Do I constantly make myself the "hero" of the story?',
+      'Do I believe people need me to find their healing?'
+    ],
+    shadowExit: 'Come to this conviction: the healing you long for cannot be found in consuming others, but in serving them. The shadow believes you cannot help others until you heal yourself. Realize the healing you seek is on the other side of healing others. Find someone who needs healing more than you and focus on them.'
+  },
+  pro: {
+    id: 'pro', name: 'Professor', shadow: 'Diminisher', color: '#9b6ed4',
+    basic: 'Knowledge', high: 'Competency', dynamic: 'Informing',
+    themes: 'Teacher / Instructor / Mentor',
+    drive: 'I must pass on the knowledge I have acquired.',
+    marker: 'Do others look to you to help them learn and understand?',
+    body: 'Builds an argument for meaning. Believes data can change minds, and that if others just see the information, they can make progress.',
+    shadowBody: 'The Diminisher is convinced no one understands a subject at their level and condescends to those with "inferior" knowledge. Attacks the credibility of the person, not the idea. New information feels like an assault on authority.',
+    shadowQuestions: [
+      'Do I see new information as an attack on my authority?',
+      'Is my immediate reaction to questioning to dismiss or demean the questioner?',
+      'Do people hesitate to share new ideas or uncomfortable truths with me?'
+    ],
+    shadowExit: 'Create an environment where others are allowed to bring their truth. Be quick to listen and slow to speak. Your goal is not to teach everything someone needs to know, but everything they need to learn. Reframe questions as positive input — evidence that you are inspiring someone to be inquisitive. Make debate the measure of your effectiveness.'
+  },
+  see: {
+    id: 'see', name: 'Seer', shadow: 'Perfectionist', color: '#38b8c0',
+    basic: 'Vision / Hope', high: 'Innovation', dynamic: 'Innovating',
+    themes: 'Visionary / Futurist / Pioneer',
+    drive: 'I must open the eyes of the blind.',
+    marker: 'Do others look to you for a vision for their future?',
+    body: 'Calls others to imagine a different version of life. Does not use a rearview mirror — meaning is brought, not found, and lives in what can be created.',
+    shadowBody: 'The Perfectionist rejects any outcome that is not the pure reflection of their vision. An oppressive inner force where nothing is ever good enough; process is blamed, paralysis follows. Constructive criticism twists into reinforcement of negative self-talk.',
+    shadowQuestions: [
+      'Do I find myself paralyzed to act on my vision?',
+      'Do I wait for perfect conditions to try something new?',
+      'Do I find it difficult to enjoy the process of creation?',
+      'Do I get easily frustrated with teammates when my vision isn\u2019t achieved?'
+    ],
+    shadowExit: 'Purposefully, consciously do something imperfect. Measure the standard of perfection by the joy of the process. A vision executed imperfectly is better than one that is never realized. Believe there is an extraordinary outcome on the other side of your vision worth all the imperfection.'
+  },
+  mav: {
+    id: 'mav', name: 'Maven', shadow: 'Nihilist', color: '#d44e96',
+    basic: 'Curiosity', high: 'Paradigm Shift', dynamic: 'Innovating',
+    themes: 'Iconoclast / Outlier / Heretic',
+    drive: 'I must liberate us from our false view of reality.',
+    marker: 'Do others look to you for the unexpected?',
+    body: 'Invites others into an unfinished search for meaning. Believes meaning lives in questions, not answers; in the journey, not the destination.',
+    shadowBody: 'The Nihilist can see why everything is wrong but has no idea what is right. Without hope for a better way, leads others toward a vision of a hopeless, dystopian future. Isolation, self-destruction, given-up hope.',
+    shadowQuestions: [
+      'Can I see a better future for myself?',
+      'Do I find myself isolating away from friends or family?',
+      'Do I often feel there is no meaning to life?'
+    ],
+    shadowExit: 'Begin by asking "Why?" — the saving grace of a Maven. Why means there is meaning to life; the simple act of asking a question implies an answer. Ask yourself: "What\u2019s the most good I can do in the world? How can I make the best contribution to the human story?" Doing good brings meaning. You must bring the meaning to life that you seek.'
+  }
+};
+
+const FREQ_ORDER = ['mot', 'cha', 'com', 'hea', 'pro', 'see', 'mav'];
+
+/* -----------------------------------------------------------------------------
+   POSITION META
+   Per-position coaching content. Position note is the core thing the static
+   map can't do — it tells the coach/client what this frequency MEANS at this
+   slot in the stack, independent of which frequency it is.
+   ----------------------------------------------------------------------------- */
+
+const POSITION_META = {
+  1: {
+    label: 'Primary #1',
+    region: 'Primary Triad',
+    note: 'The frequency you transmit without effort. It is who people experience when you are not performing, not hiding, not editing. It is also what you will over-rely on — the tool that comes to hand first, even when the moment calls for something else.',
+    reflection: 'When do you reach for this frequency even when a different one would serve the person in front of you better?'
+  },
+  2: {
+    label: 'Primary #2',
+    region: 'Primary Triad',
+    note: 'Your second voice — close enough to your primary that it flows naturally, distinct enough to round you out. In healthy expression, it deepens your primary; under pressure, it can pull in a direction that feels like conflict within yourself.',
+    reflection: 'Where in your week does this frequency come alive alongside your primary, and where do the two feel at odds?'
+  },
+  3: {
+    label: 'Primary #3',
+    region: 'Primary Triad',
+    note: 'Still in your core triad — people who know you well see this in you. It gets less airtime than #1 and #2, but when it shows up, it is yours. The gap to #4 (your bridge) determines how clean the handoff is between your primary and your reach.',
+    reflection: 'Which relationships or contexts draw this frequency forward in you more than others?'
+  },
+  4: {
+    label: 'Bridge',
+    region: 'Bridge',
+    note: 'More than a ranking — the bridge is the voice that lets the rest of you reach people whose primary frequencies are different from yours. It is your translation layer. When you connect with someone who does not share your triad, the bridge is often the carrier that gets through.',
+    reflection: 'Think of someone whose primary is very different from yours. Does your bridge frequency show up when you are with them?'
+  },
+  5: {
+    label: 'Secondary #5',
+    region: 'Secondary Triad',
+    note: 'Available to you, but not native. You can reach for this frequency deliberately and it will answer — but it takes energy. Leaders grow by learning when to borrow from the secondary triad rather than over-rotating on the primary.',
+    reflection: 'What would you have to give up to let this frequency lead a room for an hour?'
+  },
+  6: {
+    label: 'Secondary #6',
+    region: 'Secondary Triad',
+    note: 'A frequency you recognize in others more than you express yourself. You may admire it, misread it, or avoid it. The people in your life who carry this frequency strongly are a resource — they are doing something you are not built to do alone.',
+    reflection: 'Who in your world carries this frequency, and how are you relating to them?'
+  },
+  7: {
+    label: 'Secondary #7',
+    region: 'Secondary Triad',
+    note: 'Your quietest carrier. Not absent — everyone has all seven — but this one rarely leads. It can surface in moments of stretch, in unfamiliar roles, or when nothing else in your stack fits the moment. Worth noticing when it does.',
+    reflection: 'When this frequency has shown up in you, what was the situation asking for?'
+  }
+};
+
+/* Dynamic (Relating / Activating / Informing / Innovating) summary copy */
+const DYNAMIC_META = {
+  'Relating':   { color: '#4db882', note: 'connection, presence, attunement' },
+  'Activating': { color: '#e8533a', note: 'motion, command, courage, will' },
+  'Informing':  { color: '#9b6ed4', note: 'knowledge, clarity, transmission' },
+  'Innovating': { color: '#38b8c0', note: 'vision, paradigm, the unseen' }
+};
+
+/* Inner voice content — from workbook "Navigating Your Inner Voice" */
+const INNER_VOICE = {
+  intro: 'Your inner voices don\u2019t need to be silenced; they need to be led. These three practices turn the noise inside into a conductor, and the map you\u2019ve just walked into an instrument you can actually play.',
+  practices: [
+    {
+      title: 'Tune your identity to purpose',
+      body: 'Begin with identity. When you anchor who you are in unshakeable value, the noise inside finds a new conductor. Purpose gives every voice a job description. The critic becomes a coach. The fear becomes a lookout. Speak with authority over your interior world: declare who you are, why you\u2019re here, and what future you\u2019re choosing. When your identity is tuned to purpose, your words carry alignment, your choices carry weight, and your inner dialogue shifts from sabotage to stewardship.'
+    },
+    {
+      title: 'Aim your attention toward beauty and possibility',
+      body: 'Your attention is your instrument. Where you aim it, your soul will follow. Train your eyes to hunt for beauty in the ordinary — beauty turns cynics into artists and victims into creators. Feed your imagination with what is good, true, and life-giving. Ask better questions. Let curiosity interrupt your assumptions and creativity rewrite your options. When your attention is disciplined by wonder, your inner voices stop recycling old fear and start composing new futures.'
+    },
+    {
+      title: 'Rewrite the story you live by',
+      body: 'Your life moves in the direction of your dominant narrative. Identify the memories you\u2019ve made your home, then move out. Visit them if you must, but don\u2019t live there. Author counter-memories with detail and gratitude. Choose language that aligns with the future you\u2019re building, then act as if it\u2019s true — because action is how belief becomes flesh. Surround yourself with people who call you forward, not back. Steward your words, your choices, your community, and your rituals, and your inner voices will harmonize to a story of courage, meaning, and relentless hope.'
+    }
+  ],
+  checkins: [
+    'What truth about who I am will I speak over my inner world?',
+    'What story will I choose to live in to inspire my most heroic self?',
+    'Which old memory or script will I stop residing in today, and what new, specific story will I practice instead?'
+  ]
+};
+
+const SAMPLE_DATA = {
+  name: 'Aaron McManus',
+  context: 'Sample client — from personal report',
+  scores: { com: 88, cha: 82, see: 76, mav: 61, pro: 49, mot: 42, hea: 35 }
+};
+
+/* -----------------------------------------------------------------------------
+   HELPERS
+   ----------------------------------------------------------------------------- */
+
+function rankFromScores(scores) {
+  return Object.entries(scores).sort((a, b) => b[1] - a[1]).map(([id]) => id);
+}
+function scoresFromRank(rankArr) {
+  const scores = {};
+  rankArr.forEach((id, idx) => { scores[id] = 100 - (idx * 12); });
+  FREQ_ORDER.forEach(id => { if (!(id in scores)) scores[id] = 0; });
+  return scores;
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function slugify(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+}
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* -----------------------------------------------------------------------------
+   MAP GEOMETRY
+   ----------------------------------------------------------------------------- */
+const MAP_W = 560, MAP_H = 700;
+const POSITIONS = {
+  1: { x: 280, y: 80,  region: 'primary'   },
+  2: { x: 120, y: 210, region: 'primary'   },
+  3: { x: 440, y: 210, region: 'primary'   },
+  4: { x: 280, y: 350, region: 'bridge'    },
+  5: { x: 120, y: 490, region: 'secondary' },
+  6: { x: 440, y: 490, region: 'secondary' },
+  7: { x: 280, y: 620, region: 'secondary' }
+};
+
+/* -----------------------------------------------------------------------------
+   STATE
+   ----------------------------------------------------------------------------- */
+
+const state = {
+  screen: 'setup',               // 'setup' | 'map' | 'relational'
+  mode: 'solo',                  // 'solo' | 'relational'
+  clientA: null,                 // { id, name, context, scores, rank, notes: {1:'...',...}, createdAt }
+  clientB: null,                 // relational mode only
+  selectedPosition: null,        // 1..7 (solo) or { client: 'A'|'B', pos: 1..7 } (relational)
+  shadowMode: false,
+  showGaps: false,
+  showDynamics: false,
+  walkActive: false,
+  walkStep: 0,
+  showInnerVoice: false,
+  savedClients: [],              // [{id, name, context, scores, rank, notes, createdAt}]
+  saveIndicator: null,
+};
+
+const root = document.getElementById('root');
+
+/* -----------------------------------------------------------------------------
+   SAVE / LOAD
+   ----------------------------------------------------------------------------- */
+
+async function loadSavedClients() {
+  const { keys } = await storage.list(STORAGE_PREFIX + 'client:');
+  const clients = [];
+  for (const k of keys) {
+    const r = await storage.get(k);
+    if (r) try { clients.push(JSON.parse(r.value)); } catch (e) {}
+  }
+  clients.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  state.savedClients = clients;
+}
+
+async function saveClient(client) {
+  const key = STORAGE_PREFIX + 'client:' + client.id;
+  await storage.set(key, JSON.stringify(client));
+  await loadSavedClients();
+  flashSave();
+}
+
+async function deleteClient(id) {
+  const key = STORAGE_PREFIX + 'client:' + id;
+  await storage.delete(key);
+  await loadSavedClients();
+}
+
+function flashSave() {
+  state.saveIndicator = Date.now();
+  render();
+  setTimeout(() => {
+    if (Date.now() - state.saveIndicator >= 1400) {
+      state.saveIndicator = null;
+      render();
+    }
+  }, 1500);
+}
+
+const debouncedSaveCurrent = debounce(() => {
+  if (state.clientA) saveClient(state.clientA);
+}, 600);
+
+/* -----------------------------------------------------------------------------
+   RENDER — entry point
+   ----------------------------------------------------------------------------- */
+
+function render() {
+  if (state.screen === 'setup') renderSetup();
+  else if (state.screen === 'relational') renderRelational();
+  else renderMap();
+
+  if (state.showInnerVoice) renderInnerVoiceOverlay();
+  if (state.saveIndicator) renderSaveIndicator();
+}
+
+function renderSaveIndicator() {
+  const el = document.createElement('div');
+  el.className = 'save-indicator';
+  el.textContent = '· Saved ·';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1400);
+}
+
+/* -----------------------------------------------------------------------------
+   SETUP SCREEN
+   ----------------------------------------------------------------------------- */
+
+function renderSetup() {
+  const activeTab = state.setupTab || 'scores';
+  const relationalSetup = state.setupMode === 'relational';
+
+  root.innerHTML = `
+    <div class="app fade-in">
+      <header class="top">
+        <div class="brand">
+          <h1>The Living <em>Map</em></h1>
+          <div class="sub">Seven Frequencies — Interactive Coaching Instrument</div>
+          <div class="version">V 1.2 · SOLO + RELATIONAL</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-ghost ${!relationalSetup ? 'active' : ''}" data-setup-mode="solo">Solo Session</button>
+          <button class="btn-ghost ${relationalSetup ? 'active' : ''}" data-setup-mode="relational">Two-Person Session</button>
+        </div>
+      </header>
+
+      ${state.savedClients.length > 0 ? renderSavedRoster() : ''}
+
+      <div class="setup">
+        <h2>${relationalSetup ? 'Begin a two-person session' : 'Begin a session'}</h2>
+        <div class="setup-sub">${relationalSetup
+          ? 'Load or create two client maps to compare. The bridge-into-primary lines will highlight where translation lives between them.'
+          : 'Enter the client\u2019s assessment scores or their ranked frequencies. The map composes itself.'}</div>
+
+        ${relationalSetup ? renderRelationalSetup() : renderSoloSetup(activeTab)}
+      </div>
+    </div>
+  `;
+
+  attachSetupHandlers(relationalSetup, activeTab);
+}
+
+function renderSavedRoster() {
+  return `
+    <div class="roster">
+      <span class="roster-label">Saved Clients</span>
+      <div class="roster-items">
+        ${state.savedClients.map(c => `
+          <span class="chip" data-load-client="${c.id}">
+            ${escapeHtml(c.name)}
+            <span class="x" data-delete-client="${c.id}" title="Delete">×</span>
+          </span>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderSoloSetup(activeTab) {
+  return `
+    <div class="setup-field">
+      <label>Client name</label>
+      <input type="text" id="s-name" placeholder="e.g., Aaron McManus" value="${escapeHtml(state.draftName || '')}">
+    </div>
+    <div class="setup-field">
+      <label>Context / note (optional)</label>
+      <input type="text" id="s-context" placeholder="e.g., Executive coaching — Q2 check-in" value="${escapeHtml(state.draftContext || '')}">
+    </div>
+
+    <div class="setup-tabs">
+      <button class="${activeTab === 'scores' ? 'active' : ''}" data-tab="scores">Scores (0–100)</button>
+      <button class="${activeTab === 'rank' ? 'active' : ''}" data-tab="rank">Ranked Order</button>
+    </div>
+
+    ${activeTab === 'scores' ? renderScoresTab() : renderRankTab()}
+
+    <div class="setup-actions">
+      <span class="sample-hint">No data handy? <a id="load-sample">Load sample (Aaron McManus)</a></span>
+      <button class="btn-primary" id="begin-session">Begin Session →</button>
+    </div>
+  `;
+}
+
+function renderRelationalSetup() {
+  const a = state.relA || null;
+  const b = state.relB || null;
+  return `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px;">
+      <div>
+        <label class="label" style="display:block;margin-bottom:10px">Person A</label>
+        <select id="rel-a-select" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:'Cormorant Garamond',serif;font-size:16px">
+          <option value="">— select saved client —</option>
+          ${state.savedClients.map(c => `<option value="${c.id}" ${a?.id === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+        </select>
+        ${a ? `<div style="margin-top:10px;padding:10px 14px;background:var(--panel-2);border:1px solid var(--border-dim);font-size:13px;color:var(--text-dim)">
+          Primary: <strong style="color:${FREQUENCIES[a.rank[0]].color}">${FREQUENCIES[a.rank[0]].name}</strong>
+          &nbsp;· Bridge: <strong style="color:${FREQUENCIES[a.rank[3]].color}">${FREQUENCIES[a.rank[3]].name}</strong>
+        </div>` : ''}
+      </div>
+      <div>
+        <label class="label" style="display:block;margin-bottom:10px">Person B</label>
+        <select id="rel-b-select" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:'Cormorant Garamond',serif;font-size:16px">
+          <option value="">— select saved client —</option>
+          ${state.savedClients.map(c => `<option value="${c.id}" ${b?.id === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+        </select>
+        ${b ? `<div style="margin-top:10px;padding:10px 14px;background:var(--panel-2);border:1px solid var(--border-dim);font-size:13px;color:var(--text-dim)">
+          Primary: <strong style="color:${FREQUENCIES[b.rank[0]].color}">${FREQUENCIES[b.rank[0]].name}</strong>
+          &nbsp;· Bridge: <strong style="color:${FREQUENCIES[b.rank[3]].color}">${FREQUENCIES[b.rank[3]].name}</strong>
+        </div>` : ''}
+      </div>
+    </div>
+    ${state.savedClients.length < 2 ? `
+      <div style="padding:14px 18px;background:var(--panel-2);border:1px solid var(--gold-faint);color:var(--text-dim);font-size:14px;font-style:italic;margin-bottom:16px">
+        You need at least two saved clients to run a relational session. Create a solo session first, save it, and return here.
+      </div>
+    ` : ''}
+    <div class="setup-actions">
+      <button class="btn-secondary" data-setup-mode="solo">← Back to Solo</button>
+      <button class="btn-primary" id="begin-relational" ${state.savedClients.length < 2 ? 'disabled' : ''}>Begin Relational Session →</button>
+    </div>
+  `;
+}
+
+function renderScoresTab() {
+  const scores = state.draftScores || {};
+  return `
+    <div class="score-grid">
+      ${FREQ_ORDER.map(id => {
+        const f = FREQUENCIES[id];
+        return `
+          <div class="score-row">
+            <div class="freq-label">
+              <span class="mini-dot" style="background:${f.color};box-shadow:0 0 8px ${f.color}88"></span>
+              ${f.name}
+            </div>
+            <input type="number" min="0" max="100" data-freq="${id}" class="score-input" value="${scores[id] ?? ''}" placeholder="0">
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderRankTab() {
+  const rank = state.draftRank || [];
+  return `
+    <div class="rank-list">
+      ${[1,2,3,4,5,6,7].map(n => {
+        const idx = n - 1;
+        const selected = rank[idx] || '';
+        return `
+          <div class="rank-row">
+            <span class="rank-num">${n}.</span>
+            <select data-rank="${idx}" class="rank-select">
+              <option value="">— select frequency —</option>
+              ${FREQ_ORDER.map(id => `<option value="${id}" ${selected === id ? 'selected' : ''}>${FREQUENCIES[id].name}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function attachSetupHandlers(relationalSetup, activeTab) {
+  document.querySelectorAll('[data-setup-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.setupMode = btn.dataset.setupMode;
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-load-client]').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.dataset.deleteClient) return;
+      const c = state.savedClients.find(x => x.id === el.dataset.loadClient);
+      if (c) {
+        state.clientA = JSON.parse(JSON.stringify(c));
+        state.screen = 'map';
+        state.mode = 'solo';
+        state.selectedPosition = null;
+        state.shadowMode = false;
+        state.walkActive = false;
+        render();
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-delete-client]').forEach(el => {
+    el.addEventListener('click', async e => {
+      e.stopPropagation();
+      const id = el.dataset.deleteClient;
+      const c = state.savedClients.find(x => x.id === id);
+      if (c && confirm(`Delete "${c.name}"? This cannot be undone.`)) {
+        await deleteClient(id);
+        render();
+      }
+    });
+  });
+
+  if (relationalSetup) {
+    const aSel = document.getElementById('rel-a-select');
+    const bSel = document.getElementById('rel-b-select');
+    if (aSel) aSel.addEventListener('change', () => {
+      const c = state.savedClients.find(x => x.id === aSel.value);
+      state.relA = c ? JSON.parse(JSON.stringify(c)) : null;
+      render();
+    });
+    if (bSel) bSel.addEventListener('change', () => {
+      const c = state.savedClients.find(x => x.id === bSel.value);
+      state.relB = c ? JSON.parse(JSON.stringify(c)) : null;
+      render();
+    });
+    const beginRel = document.getElementById('begin-relational');
+    if (beginRel) beginRel.addEventListener('click', () => {
+      if (!state.relA || !state.relB) { alert('Select two clients.'); return; }
+      if (state.relA.id === state.relB.id) { alert('Select two different clients.'); return; }
+      state.clientA = state.relA;
+      state.clientB = state.relB;
+      state.screen = 'relational';
+      state.mode = 'relational';
+      state.selectedPosition = null;
+      state.shadowMode = false;
+      render();
+    });
+    return;
+  }
+
+  // solo setup handlers
+  document.querySelectorAll('.setup-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      persistSetupDrafts();
+      state.setupTab = btn.dataset.tab;
+      render();
+    });
+  });
+
+  const loadSampleEl = document.getElementById('load-sample');
+  if (loadSampleEl) loadSampleEl.addEventListener('click', () => {
+    state.draftName = SAMPLE_DATA.name;
+    state.draftContext = SAMPLE_DATA.context;
+    state.draftScores = { ...SAMPLE_DATA.scores };
+    state.draftRank = rankFromScores(SAMPLE_DATA.scores);
+    render();
+  });
+
+  const beginEl = document.getElementById('begin-session');
+  if (beginEl) beginEl.addEventListener('click', beginSession);
+
+  ['s-name', 's-context'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', persistSetupDrafts);
+  });
+}
+
+function persistSetupDrafts() {
+  const nameEl = document.getElementById('s-name');
+  const ctxEl = document.getElementById('s-context');
+  if (nameEl) state.draftName = nameEl.value;
+  if (ctxEl) state.draftContext = ctxEl.value;
+  const scoreInputs = document.querySelectorAll('.score-input');
+  if (scoreInputs.length) {
+    state.draftScores = state.draftScores || {};
+    scoreInputs.forEach(el => {
+      const v = el.value.trim();
+      state.draftScores[el.dataset.freq] = v === '' ? null : Math.max(0, Math.min(100, parseInt(v) || 0));
+    });
+  }
+  const rankSelects = document.querySelectorAll('.rank-select');
+  if (rankSelects.length) {
+    state.draftRank = [];
+    rankSelects.forEach(el => {
+      state.draftRank[parseInt(el.dataset.rank)] = el.value || null;
+    });
+  }
+}
+
+function beginSession() {
+  persistSetupDrafts();
+  const name = (state.draftName || '').trim() || 'Client';
+  const context = (state.draftContext || '').trim();
+  const tab = state.setupTab || 'scores';
+
+  let scores;
+  if (tab === 'scores') {
+    scores = {};
+    FREQ_ORDER.forEach(id => {
+      scores[id] = (state.draftScores && state.draftScores[id] != null) ? state.draftScores[id] : 0;
+    });
+    if (Object.values(scores).reduce((a, b) => a + b, 0) === 0) {
+      alert('Please enter scores for at least some frequencies, or load the sample.');
+      return;
+    }
+  } else {
+    const rank = (state.draftRank || []).filter(Boolean);
+    const uniq = new Set(rank);
+    if (uniq.size !== 7) {
+      alert('Please select all seven frequencies in ranked order, with no duplicates.');
+      return;
+    }
+    scores = scoresFromRank(rank);
+  }
+
+  const rank = rankFromScores(scores);
+  const id = slugify(name) + '-' + Date.now().toString(36);
+  state.clientA = {
+    id,
+    name,
+    context,
+    scores,
+    rank,
+    notes: {},
+    createdAt: Date.now()
+  };
+  saveClient(state.clientA);
+  state.screen = 'map';
+  state.mode = 'solo';
+  state.selectedPosition = null;
+  state.shadowMode = false;
+  state.walkActive = false;
+  render();
+}
+
+/* -----------------------------------------------------------------------------
+   SOLO MAP SCREEN
+   ----------------------------------------------------------------------------- */
+
+function renderMap() {
+  const c = state.clientA;
+
+  root.innerHTML = `
+    <div class="app fade-in">
+      <header class="top">
+        <div class="brand">
+          <h1>The Living <em>Map</em></h1>
+          <div class="sub">Seven Frequencies — Interactive Coaching Instrument</div>
+          <div class="version">V 1.2 · SOLO</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-ghost" data-action="new">+ New</button>
+          <button class="btn-ghost" data-action="to-relational">Relational Mode →</button>
+          <button class="btn-ghost" data-action="export-json">Export JSON</button>
+          <button class="btn-ghost" data-action="print-pdf">Print / PDF</button>
+        </div>
+      </header>
+
+      ${state.savedClients.length > 1 ? renderSavedRoster() : ''}
+
+      <div class="client-bar">
+        <div>
+          <div class="client-name">${escapeHtml(c.name)}</div>
+          ${c.context ? `<div class="client-meta">${escapeHtml(c.context)}</div>` : ''}
+        </div>
+        <div class="client-meta">
+          Primary: <span style="color:${FREQUENCIES[c.rank[0]].color}">${FREQUENCIES[c.rank[0]].name}</span>
+          &nbsp;·&nbsp; Bridge: <span style="color:${FREQUENCIES[c.rank[3]].color}">${FREQUENCIES[c.rank[3]].name}</span>
+          &nbsp;·&nbsp; Shadow: <span style="color:${FREQUENCIES[c.rank[0]].color}">${FREQUENCIES[c.rank[0]].shadow}</span>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="map-panel">
+          <div class="map-header">
+            <div class="map-title">Frequency Map</div>
+            <div class="map-toggles">
+              <button class="toggle-btn ${state.showGaps ? 'active' : ''}" data-toggle="gaps">Score Gaps</button>
+              <button class="toggle-btn ${state.showDynamics ? 'active' : ''}" data-toggle="dynamics">Dynamics</button>
+              <button class="toggle-btn ${state.shadowMode ? 'shadow-active' : ''}" data-toggle="shadow">Shadows</button>
+            </div>
+          </div>
+          ${renderMapSVG(c, 'A')}
+          ${state.showDynamics ? renderDynamicsLegend(c) : ''}
+          <div class="map-controls">
+            ${state.walkActive ? `
+              <button data-action="walk-prev" ${state.walkStep === 0 ? 'disabled' : ''}>← Prev</button>
+              <span class="walk-indicator"><span class="dot"></span> Position ${state.walkStep + 1} of 7</span>
+              <button data-action="walk-next" ${state.walkStep === 6 ? 'disabled' : ''}>Next →</button>
+              <button data-action="walk-end">End Walk</button>
+            ` : `
+              <button class="primary" data-action="walk-start">Guide Me Through →</button>
+              <button data-action="show-inner-voice">Inner Voice</button>
+            `}
+          </div>
+        </div>
+        <div class="detail-panel" id="detail">
+          ${renderDetail(c)}
+        </div>
+      </div>
+
+      <div class="inner-voice-banner" data-action="show-inner-voice">
+        <h3>Navigate your inner voice</h3>
+        <p>Three practices and three check-ins for leading the voices inside you, now that the map is drawn.</p>
+      </div>
+    </div>
+  `;
+
+  attachMapHandlers();
+}
+
+function renderDynamicsLegend(c) {
+  const top3 = c.rank.slice(0, 3).map(id => FREQUENCIES[id].dynamic);
+  const bottom3 = c.rank.slice(4, 7).map(id => FREQUENCIES[id].dynamic);
+  const bridge = FREQUENCIES[c.rank[3]].dynamic;
+  const counts = dyn => dyn.reduce((a, d) => (a[d] = (a[d]||0)+1, a), {});
+  const topCounts = counts(top3);
+  const botCounts = counts(bottom3);
+  const fmt = o => Object.entries(o).map(([k,v]) => `<span style="color:${DYNAMIC_META[k].color}">${k}×${v}</span>`).join(' · ');
+  return `
+    <div style="margin:16px 10px 0; padding:12px 14px; background:var(--panel-2); border:1px solid var(--border-dim); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; color:var(--text-dim)">
+      <div>PRIMARY: ${fmt(topCounts)}</div>
+      <div style="margin-top:4px">BRIDGE: <span style="color:${DYNAMIC_META[bridge].color}">${bridge}</span></div>
+      <div style="margin-top:4px">SECONDARY: ${fmt(botCounts)}</div>
+    </div>
+  `;
+}
+
+function renderMapSVG(c, sideLabel) {
+  const { rank, scores } = c;
+  const shadow = state.shadowMode;
+  const showGaps = state.showGaps;
+  const showDyn = state.showDynamics;
+  const selPos = (state.mode === 'solo' && state.selectedPosition) ||
+                 (state.mode === 'relational' && state.selectedPosition?.client === sideLabel ? state.selectedPosition.pos : null);
+
+  // dynamic coloring of the triangles
+  const primDyns = [...new Set(rank.slice(0,3).map(id => FREQUENCIES[id].dynamic))];
+  const secDyns  = [...new Set(rank.slice(4,7).map(id => FREQUENCIES[id].dynamic))];
+  const primStroke = showDyn && primDyns.length === 1 ? DYNAMIC_META[primDyns[0]].color : 'var(--border)';
+  const secStroke  = showDyn && secDyns.length  === 1 ? DYNAMIC_META[secDyns[0]].color  : 'var(--border)';
+
+  return `
+    <svg class="map-svg ${shadow ? 'shadow-mode' : ''}" viewBox="0 0 ${MAP_W} ${MAP_H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        ${Object.values(FREQUENCIES).map(f => `
+          <radialGradient id="grad-${f.id}-${sideLabel}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="${f.color}" stop-opacity="1"/>
+            <stop offset="70%" stop-color="${f.color}" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="${f.color}" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="glow-${f.id}-${sideLabel}" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        `).join('')}
+      </defs>
+
+      <text x="${MAP_W/2}" y="30" class="region-label" style="letter-spacing:0.3em">△ &nbsp; PRIMARY TRIAD &nbsp; △</text>
+      <text x="${MAP_W/2}" y="${MAP_H - 10}" class="region-label" style="letter-spacing:0.3em">▽ &nbsp; SECONDARY TRIAD &nbsp; ▽</text>
+      <text x="40" y="${POSITIONS[4].y + 4}" class="region-label-side">BRIDGE</text>
+
+      <polygon class="triangle ${showDyn ? 'dyn-overlay' : ''}"
+        points="${POSITIONS[1].x},${POSITIONS[1].y} ${POSITIONS[2].x},${POSITIONS[2].y} ${POSITIONS[3].x},${POSITIONS[3].y}"
+        stroke="${primStroke}"/>
+
+      <polygon class="triangle ${showDyn ? 'dyn-overlay' : ''}"
+        points="${POSITIONS[7].x},${POSITIONS[7].y} ${POSITIONS[5].x},${POSITIONS[5].y} ${POSITIONS[6].x},${POSITIONS[6].y}"
+        stroke="${secStroke}"/>
+
+      <line class="bridge-line"
+        x1="${POSITIONS[1].x}" y1="${POSITIONS[2].y + 70}"
+        x2="${POSITIONS[7].x}" y2="${POSITIONS[5].y - 70}" />
+
+      <circle class="bridge-glow" cx="${POSITIONS[4].x}" cy="${POSITIONS[4].y}" r="22"/>
+
+      ${showGaps ? renderGapMarkers(c) : ''}
+
+      ${[1,2,3,4,5,6,7].map(pos => {
+        const freqId = rank[pos - 1];
+        const f = FREQUENCIES[freqId];
+        const score = scores[freqId];
+        const p = POSITIONS[pos];
+        const isSelected = selPos === pos;
+        const isBridge = pos === 4;
+        return `
+          <g class="freq-dot ${isSelected ? 'selected' : ''} ${isBridge ? 'bridge' : ''}"
+             data-position="${pos}"
+             data-client="${sideLabel}"
+             transform="translate(${p.x},${p.y})">
+            <circle class="dot-ring" r="${isBridge ? 26 : 22}" stroke="${f.color}" />
+            <circle class="dot-core" fill="url(#grad-${f.id}-${sideLabel})" stroke="${f.color}" filter="url(#glow-${f.id}-${sideLabel})"/>
+            <text class="dot-rank" y="-36">${isBridge ? 'bridge' : '#' + pos}</text>
+            <text class="dot-label" y="42">${f.name}</text>
+            <text class="dot-score" y="55">${score}</text>
+            ${shadow && isSelected ? `<text class="dot-label" y="70" style="fill:#d46565;font-style:italic;font-family:Cormorant Garamond, serif;font-size:12px;letter-spacing:0.1em">${f.shadow}</text>` : ''}
+          </g>
+        `;
+      }).join('')}
+    </svg>
+  `;
+}
+
+/* Draw small markers indicating the score gap between adjacent-ranked positions.
+   Gaps are shown as arcs on the right side of the map with numeric deltas. */
+function renderGapMarkers(c) {
+  const { rank, scores } = c;
+  const markers = [];
+  for (let i = 0; i < 6; i++) {
+    const f1 = rank[i], f2 = rank[i+1];
+    const gap = scores[f1] - scores[f2];
+    const p1 = POSITIONS[i+1], p2 = POSITIONS[i+2];
+    const mx = (p1.x + p2.x) / 2;
+    const my = (p1.y + p2.y) / 2;
+    // offset to the right edge
+    const ox = MAP_W - 30;
+    const oy = my;
+    // intensity of gap
+    const opacity = Math.min(0.9, 0.25 + gap / 60);
+    markers.push(`
+      <line class="gap-marker" x1="${ox - 6}" y1="${oy}" x2="${ox + 6}" y2="${oy}" stroke-width="${1 + gap/20}" opacity="${opacity}"/>
+      <text class="gap-label" x="${ox}" y="${oy - 6}">${gap > 0 ? '+' : ''}${gap}</text>
+    `);
+  }
+  return markers.join('');
+}
+
+/* -----------------------------------------------------------------------------
+   DETAIL PANEL (solo)
+   ----------------------------------------------------------------------------- */
+
+function renderDetail(c, forceClient = null) {
+  const pos = state.mode === 'relational'
+    ? (state.selectedPosition && state.selectedPosition.pos)
+    : state.selectedPosition;
+  const client = forceClient || (state.mode === 'relational'
+    ? (state.selectedPosition?.client === 'B' ? state.clientB : state.clientA)
+    : c);
+
+  if (!pos) {
+    return `
+      <div class="detail-empty">
+        Select any frequency on the map to explore its role in this client\u2019s signature.
+        <div class="tip">Or press "Guide Me Through" to walk the seven positions.</div>
+      </div>
+    `;
+  }
+
+  const posMeta = POSITION_META[pos];
+  const freqId = client.rank[pos - 1];
+  const f = FREQUENCIES[freqId];
+  const score = client.scores[freqId];
+  const shadow = state.shadowMode;
+  const note = (client.notes && client.notes[pos]) || '';
+
+  return `
+    <div class="detail-card fade-in" style="--hero-color:${f.color}">
+      <div class="detail-hero" style="border-top: 3px solid ${f.color}">
+        <div class="hero-position">${posMeta.label} · ${posMeta.region} · Score ${score}</div>
+        <div class="hero-name" style="color:${f.color}">${f.name}</div>
+        <div class="hero-shadow-name">shadow: ${f.shadow}</div>
+        <div class="hero-transmits">
+          transmits <strong>${f.basic}</strong> &nbsp;·&nbsp; meets <strong>${f.high}</strong>
+          <span class="hero-dynamic" style="color:${DYNAMIC_META[f.dynamic].color};border-color:${DYNAMIC_META[f.dynamic].color}33;background:${DYNAMIC_META[f.dynamic].color}11">${f.dynamic}</span>
+        </div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>What this frequency is</h3>
+          <p>${f.body}</p>
+          <p class="detail-meta">Themes: ${f.themes} &nbsp;·&nbsp; Drive: "${f.drive}"</p>
+        </div>
+
+        <div class="detail-section">
+          <h3>What it means at this position</h3>
+          <p class="position-note">${posMeta.note}</p>
+        </div>
+
+        ${shadow ? `
+          <div class="detail-section">
+            <h3>Shadow expression</h3>
+            <div class="shadow-block">
+              <h4>${f.shadow}</h4>
+              <p>${f.shadowBody}</p>
+            </div>
+            <div class="shadow-block" style="margin-top:10px">
+              <h4>Are you in your shadow?</h4>
+              <ul class="shadow-list">
+                ${f.shadowQuestions.map(q => `<li>${q}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="shadow-block" style="margin-top:10px">
+              <h4>Leaving the shadow</h4>
+              <p>${f.shadowExit}</p>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="detail-section">
+          <h3>Reflection</h3>
+          <div class="reflection">${posMeta.reflection}</div>
+        </div>
+
+        <div class="detail-section coach-notes">
+          <h3>Coach Notes — Position ${pos}</h3>
+          <textarea id="note-input" data-position="${pos}" placeholder="What did the client say when they landed here? What did you notice?">${escapeHtml(note)}</textarea>
+          <div class="note-hint">Auto-saves as you type · Appears in PDF export</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* -----------------------------------------------------------------------------
+   RELATIONAL SCREEN
+   ----------------------------------------------------------------------------- */
+
+function renderRelational() {
+  const a = state.clientA, b = state.clientB;
+  const bridgeReading = computeBridgeReading(a, b);
+
+  root.innerHTML = `
+    <div class="app fade-in">
+      <header class="top">
+        <div class="brand">
+          <h1>The Living <em>Map</em></h1>
+          <div class="sub">Seven Frequencies — Interactive Coaching Instrument</div>
+          <div class="version">V 1.2 · RELATIONAL</div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-ghost" data-action="back-to-setup">← Choose Different Pair</button>
+          <button class="btn-ghost" data-action="to-solo-a">Solo: ${escapeHtml(a.name)}</button>
+          <button class="btn-ghost" data-action="to-solo-b">Solo: ${escapeHtml(b.name)}</button>
+          <button class="btn-ghost" data-action="print-pdf">Print / PDF</button>
+        </div>
+      </header>
+
+      <div class="map-header" style="padding: 0 0 12px; border-bottom: 1px solid var(--border-dim); margin-bottom: 16px">
+        <div class="map-title">Relational Map · Bridge-Into-Primary Reading</div>
+        <div class="map-toggles">
+          <button class="toggle-btn ${state.shadowMode ? 'shadow-active' : ''}" data-toggle="shadow">Shadows</button>
+        </div>
+      </div>
+
+      <div class="body relational">
+        <div class="map-panel relational">
+          <div class="rel-header">
+            <div class="name">${escapeHtml(a.name)}</div>
+            <div class="meta">Primary: ${FREQUENCIES[a.rank[0]].name} · Bridge: ${FREQUENCIES[a.rank[3]].name}</div>
+          </div>
+          ${renderMapSVG(a, 'A')}
+        </div>
+        <div class="map-panel relational">
+          <div class="rel-header">
+            <div class="name">${escapeHtml(b.name)}</div>
+            <div class="meta">Primary: ${FREQUENCIES[b.rank[0]].name} · Bridge: ${FREQUENCIES[b.rank[3]].name}</div>
+          </div>
+          ${renderMapSVG(b, 'B')}
+        </div>
+      </div>
+
+      ${renderBridgeReading(a, b, bridgeReading)}
+    </div>
+  `;
+
+  attachMapHandlers();
+}
+
+function computeBridgeReading(a, b) {
+  const aBridge = a.rank[3];
+  const bBridge = b.rank[3];
+  const aPrimary = a.rank.slice(0, 3);
+  const bPrimary = b.rank.slice(0, 3);
+  const aPrimaryOne = a.rank[0];
+  const bPrimaryOne = b.rank[0];
+
+  const reading = {
+    aBridgeInBPrimary: bPrimary.includes(aBridge) ? bPrimary.indexOf(aBridge) + 1 : null,
+    bBridgeInAPrimary: aPrimary.includes(bBridge) ? aPrimary.indexOf(bBridge) + 1 : null,
+    bridgeMatch: aBridge === bBridge,
+    sharedPrimaries: aPrimary.filter(f => bPrimary.includes(f)),
+    primaryMatch: aPrimaryOne === bPrimaryOne,
+    aBridgeFreq: FREQUENCIES[aBridge],
+    bBridgeFreq: FREQUENCIES[bBridge]
+  };
+  return reading;
+}
+
+function renderBridgeReading(a, b, r) {
+  const lines = [];
+
+  if (r.bridgeMatch) {
+    lines.push({
+      arrow: '◉',
+      text: `<strong>Shared bridge.</strong> Both of you carry ${FREQUENCIES[a.rank[3]].name} as your bridge — the same translation layer. You reach others through the same door, which means you likely recognize each other\u2019s moves when navigating outward, even when your primaries differ.`
+    });
+  }
+
+  if (r.primaryMatch) {
+    lines.push({
+      arrow: '▲',
+      text: `<strong>Mirror primary.</strong> Both carry ${FREQUENCIES[a.rank[0]].name} as primary #1. This is the clearest overlap — and also where the frictions in this pairing will feel most personal. Two of the same voice in a room need to stay awake to who is transmitting and who is listening.`
+    });
+  }
+
+  if (r.aBridgeInBPrimary) {
+    lines.push({
+      arrow: '→',
+      text: `<strong>${escapeHtml(a.name)}\u2019s bridge (${r.aBridgeFreq.name}) lands in ${escapeHtml(b.name)}\u2019s primary triad</strong> at position #${r.aBridgeInBPrimary}. When ${escapeHtml(a.name)} reaches out, they are speaking natively to something core in ${escapeHtml(b.name)}. The translation is short.`
+    });
+  } else {
+    lines.push({
+      arrow: '—',
+      text: `<strong>${escapeHtml(a.name)}\u2019s bridge (${r.aBridgeFreq.name}) does not land in ${escapeHtml(b.name)}\u2019s primary triad.</strong> The easiest path inward is not obvious. ${escapeHtml(a.name)} may need to borrow from their secondary triad when trying to meet ${escapeHtml(b.name)} where they live.`
+    });
+  }
+
+  if (r.bBridgeInAPrimary) {
+    lines.push({
+      arrow: '←',
+      text: `<strong>${escapeHtml(b.name)}\u2019s bridge (${r.bBridgeFreq.name}) lands in ${escapeHtml(a.name)}\u2019s primary triad</strong> at position #${r.bBridgeInAPrimary}. When ${escapeHtml(b.name)} reaches out, they are speaking natively to something core in ${escapeHtml(a.name)}.`
+    });
+  } else {
+    lines.push({
+      arrow: '—',
+      text: `<strong>${escapeHtml(b.name)}\u2019s bridge (${r.bBridgeFreq.name}) does not land in ${escapeHtml(a.name)}\u2019s primary triad.</strong> ${escapeHtml(b.name)} may feel the need to stretch when initiating connection.`
+    });
+  }
+
+  if (r.sharedPrimaries.length > 0) {
+    const names = r.sharedPrimaries.map(id => FREQUENCIES[id].name).join(', ');
+    lines.push({
+      arrow: '◈',
+      text: `<strong>Shared primary frequencies:</strong> ${names}. You operate from common ground in these carriers — this is where collaboration is most effortless and where blind spots are most likely to be mutual.`
+    });
+  }
+
+  return `
+    <div class="bridge-reading">
+      <h3>What the bridges say</h3>
+      ${lines.map(l => `
+        <div class="rl-row">
+          <div class="rl-arrow">${l.arrow}</div>
+          <div class="rl-text">${l.text}</div>
+        </div>
+      `).join('')}
+      <div class="rl-row" style="border-top: 1px solid var(--gold-faint); padding-top: 16px; margin-top: 8px">
+        <div class="rl-arrow">?</div>
+        <div class="rl-text" style="font-style: italic; color: var(--text-dim)">
+          Reflection: When this pair is at its best together, which of the readings above is most alive? When this pair is stuck, which one is the unspoken obstacle?
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* -----------------------------------------------------------------------------
+   MAP HANDLERS (shared solo + relational)
+   ----------------------------------------------------------------------------- */
+
+function attachMapHandlers() {
+  // Dots
+  document.querySelectorAll('.freq-dot').forEach(el => {
+    el.addEventListener('click', () => {
+      const pos = parseInt(el.dataset.position);
+      const client = el.dataset.client;
+      if (state.mode === 'relational') {
+        state.selectedPosition = { client, pos };
+      } else {
+        state.selectedPosition = pos;
+      }
+      state.walkActive = false;
+      render();
+    });
+  });
+
+  // Toggles
+  document.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      const t = el.dataset.toggle;
+      if (t === 'shadow') state.shadowMode = !state.shadowMode;
+      if (t === 'gaps') state.showGaps = !state.showGaps;
+      if (t === 'dynamics') state.showDynamics = !state.showDynamics;
+      render();
+    });
+  });
+
+  // Action buttons
+  document.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', () => handleAction(el.dataset.action));
+  });
+
+  // Coach notes
+  const noteInput = document.getElementById('note-input');
+  if (noteInput) {
+    noteInput.addEventListener('input', e => {
+      const pos = parseInt(e.target.dataset.position);
+      const client = state.mode === 'relational'
+        ? (state.selectedPosition?.client === 'B' ? state.clientB : state.clientA)
+        : state.clientA;
+      if (!client.notes) client.notes = {};
+      client.notes[pos] = e.target.value;
+      debouncedSaveCurrent();
+    });
+  }
+}
+
+function handleAction(action) {
+  switch (action) {
+    case 'new':
+      if (confirm('Start a new session? Current map will be cleared from view (saved clients remain).')) {
+        state.screen = 'setup';
+        state.clientA = null;
+        state.clientB = null;
+        state.selectedPosition = null;
+        state.shadowMode = false;
+        state.walkActive = false;
+        state.draftName = '';
+        state.draftContext = '';
+        state.draftScores = {};
+        state.draftRank = [];
+        render();
+      }
+      break;
+    case 'to-relational':
+      state.setupMode = 'relational';
+      state.screen = 'setup';
+      render();
+      break;
+    case 'to-solo-a':
+      state.clientA = state.clientA;
+      state.clientB = null;
+      state.screen = 'map';
+      state.mode = 'solo';
+      state.selectedPosition = null;
+      render();
+      break;
+    case 'to-solo-b':
+      state.clientA = state.clientB;
+      state.clientB = null;
+      state.screen = 'map';
+      state.mode = 'solo';
+      state.selectedPosition = null;
+      render();
+      break;
+    case 'back-to-setup':
+      state.screen = 'setup';
+      state.setupMode = 'relational';
+      render();
+      break;
+    case 'walk-start':
+      state.walkActive = true;
+      state.walkStep = 0;
+      state.selectedPosition = 1;
+      render();
+      break;
+    case 'walk-next':
+      if (state.walkStep < 6) {
+        state.walkStep++;
+        state.selectedPosition = state.walkStep + 1;
+        render();
+      }
+      break;
+    case 'walk-prev':
+      if (state.walkStep > 0) {
+        state.walkStep--;
+        state.selectedPosition = state.walkStep + 1;
+        render();
+      }
+      break;
+    case 'walk-end':
+      state.walkActive = false;
+      render();
+      break;
+    case 'show-inner-voice':
+      state.showInnerVoice = true;
+      render();
+      break;
+    case 'export-json':
+      exportJSON();
+      break;
+    case 'print-pdf':
+      window.print();
+      break;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   INNER VOICE OVERLAY
+   ----------------------------------------------------------------------------- */
+
+function renderInnerVoiceOverlay() {
+  const div = document.createElement('div');
+  div.className = 'inner-voice-modal';
+  div.innerHTML = `
+    <div class="inner-voice-content">
+      <button class="iv-close" id="iv-close">×</button>
+      <h2>Navigating Your Inner Voice</h2>
+      <div class="iv-sub">${INNER_VOICE.intro}</div>
+      ${INNER_VOICE.practices.map(p => `
+        <div class="iv-practice">
+          <h3>${p.title}</h3>
+          <p>${p.body}</p>
+        </div>
+      `).join('')}
+      <div class="iv-checkins">
+        <h3>Three Check-Ins</h3>
+        <ol>
+          ${INNER_VOICE.checkins.map(q => `<li>${q}</li>`).join('')}
+        </ol>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+  document.getElementById('iv-close').addEventListener('click', () => {
+    state.showInnerVoice = false;
+    render();
+  });
+  div.addEventListener('click', e => {
+    if (e.target === div) {
+      state.showInnerVoice = false;
+      render();
+    }
+  });
+}
+
+/* -----------------------------------------------------------------------------
+   JSON EXPORT (for future Team Diagnostic handoff)
+   ----------------------------------------------------------------------------- */
+
+function exportJSON() {
+  const c = state.clientA;
+  const payload = {
+    tool: 'living-map',
+    version: '1.2',
+    exportedAt: new Date().toISOString(),
+    client: {
+      name: c.name,
+      context: c.context,
+      scores: c.scores,
+      rank: c.rank,
+      primary: FREQUENCIES[c.rank[0]].name,
+      bridge: FREQUENCIES[c.rank[3]].name,
+      shadow: FREQUENCIES[c.rank[0]].shadow,
+      notes: c.notes || {}
+    }
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = slugify(c.name) + '-living-map.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* -----------------------------------------------------------------------------
+   BOOT
+   ----------------------------------------------------------------------------- */
+
+(async function boot() {
+  await loadSavedClients();
+  render();
+})();
+</script>
+</body>
+</html>
